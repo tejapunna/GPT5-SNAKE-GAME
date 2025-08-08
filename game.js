@@ -25,6 +25,7 @@
   const btnLeft = document.getElementById('btnLeft');
   const btnRight = document.getElementById('btnRight');
   const btnPause = document.getElementById('btnPause');
+  const btnFs = document.getElementById('toggleFullscreen');
 
   // Logical grid
   const tile = 20;
@@ -65,22 +66,26 @@
   }
 
   function fitCanvas(){
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    const size = Math.floor((rect.width && rect.height) ? Math.min(rect.width, rect.height) : (rect.width || 420));
-    const px = Math.max(1, Math.round(size * dpr));
+    const wrap = document.getElementById('boardWrap');
+    const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    const rect = wrap ? wrap.getBoundingClientRect() : canvas.getBoundingClientRect();
+    const size = Math.max(120, Math.floor(Math.min(rect.width || 420, rect.height || rect.width || 420)));
+    // bitmap size in device pixels
+    const px = size * dpr;
     canvas.width = px;
     canvas.height = px;
+    // css size in css pixels
     canvas.style.width = size + 'px';
     canvas.style.height = size + 'px';
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.scale(dpr, dpr); // draw in CSS pixels
   }
   window.addEventListener('resize', fitCanvas);
   try { new ResizeObserver(fitCanvas).observe(canvas); } catch {}
+  document.addEventListener('fullscreenchange', fitCanvas);
+  document.addEventListener('webkitfullscreenchange', fitCanvas);
 
   function draw(){
-    const cssSize = canvas.clientWidth || 420;
+  const cssSize = canvas.clientWidth || (canvas.getBoundingClientRect().width || 420);
     const scale = cssSize / tiles;
 
     // background
@@ -261,6 +266,32 @@
   bindTap(btnLeft, ()=> setDir(-1,0));
   bindTap(btnRight, ()=> setDir(1,0));
   bindTap(btnPause, ()=> { state.running = !state.running; });
+
+  // Fullscreen handling
+  async function enterFullscreen(){
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if(req) await req.call(el);
+  }
+  async function exitFullscreen(){
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if(exit) await exit.call(document);
+  }
+  function isFullscreen(){
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+  }
+  if(btnFs){
+    btnFs.addEventListener('click', async()=>{
+      try{
+        if(isFullscreen()) await exitFullscreen(); else await enterFullscreen();
+        setTimeout(fitCanvas, 250);
+      }catch(err){
+        // Fallback on iOS: scroll to top and refit
+        window.scrollTo(0,0);
+        setTimeout(fitCanvas, 250);
+      }
+    });
+  }
 
   // Start
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
