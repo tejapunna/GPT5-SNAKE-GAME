@@ -24,9 +24,26 @@
     </header>
 
     <main>
-      <canvas id="board" width="420" height="420" aria-label="Snake game board"></canvas>
+      <div class="board-wrap">
+        <canvas id="board" width="420" height="420" aria-label="Snake game board"></canvas>
+      </div>
 
-      <aside class="sidebar">
+      <!-- Mobile controls (shown on touch devices) -->
+      <div id="mobileControls" class="mobile-controls hidden" aria-label="Touch controls">
+        <div class="row">
+          <button id="btnUp" class="ctrl">▲</button>
+        </div>
+        <div class="row">
+          <button id="btnLeft" class="ctrl">◀</button>
+          <button id="btnPause" class="ctrl pause">⏸</button>
+          <button id="btnRight" class="ctrl">▶</button>
+        </div>
+        <div class="row">
+          <button id="btnDown" class="ctrl">▼</button>
+        </div>
+      </div>
+
+  <aside class="sidebar">
         <h2>Top Scores</h2>
         <ol id="topScores" class="scores"></ol>
         <h3>Your Best</h3>

@@ -18,8 +18,9 @@ header h1{margin:0;font-size:28px}
 button{background:var(--panel);color:var(--text);border:1px solid #374151;padding:6px 10px;border-radius:8px;cursor:pointer}
 button:hover{background:#1f2937}
 
-main{display:grid;grid-template-columns:1fr 240px;gap:16px;align-items:start}
-#board{background:#000;border:2px solid #1f2937;border-radius:8px;box-shadow:0 0 0 4px rgba(0,0,0,.2) inset}
+main{display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start}
+.board-wrap{width:100%;max-width:520px;aspect-ratio:1;border-radius:10px}
+#board{width:100%;height:100%;background:#000;border:2px solid #1f2937;border-radius:8px;box-shadow:0 0 0 4px rgba(0,0,0,.2) inset}
 .sidebar{background:var(--panel);padding:12px;border-radius:10px;border:1px solid #1f2937}
 .sidebar h2,.sidebar h3{margin:8px 0}
 .scores{margin:0;padding-left:18px}
@@ -46,3 +47,16 @@ footer{color:var(--muted);text-align:center}
 /* Optional python skin colors (used by game.js) */
 .skin-python .snake-head{fill:#1f3a5f}
 .skin-python .snake-body{fill:#f6c756}
+
+/* Mobile controls */
+.mobile-controls{display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:12px}
+.mobile-controls .row{display:flex;gap:12px}
+.mobile-controls .ctrl{font-size:20px;width:56px;height:56px;border-radius:50%;background:#0b1220;border:1px solid #374151;color:var(--text)}
+.mobile-controls .pause{width:80px}
+
+/* Responsive layout */
+@media (max-width: 840px){
+  main{grid-template-columns:1fr;}
+  .sidebar{order:2}
+  .board-wrap{max-width:100%}
+}

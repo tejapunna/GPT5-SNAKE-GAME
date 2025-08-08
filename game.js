@@ -1,6 +1,7 @@
-// game.js - Minimal, responsive snake game with score saving
+// game.js - Responsive snake with touch controls and persistent scores
 
 (function(){
+  // Elements
   const canvas = document.getElementById('board');
   const ctx = canvas.getContext('2d');
   const scoreEl = document.getElementById('score');
@@ -18,9 +19,18 @@
   const form = document.getElementById('nameForm');
   const input = document.getElementById('nameInput');
 
-  const tile = 20; // grid size
-  const tiles = canvas.width / tile; // assume square
+  const mobileControls = document.getElementById('mobileControls');
+  const btnUp = document.getElementById('btnUp');
+  const btnDown = document.getElementById('btnDown');
+  const btnLeft = document.getElementById('btnLeft');
+  const btnRight = document.getElementById('btnRight');
+  const btnPause = document.getElementById('btnPause');
 
+  // Logical grid
+  const tile = 20;
+  const tiles = 21; // 420/20
+
+  // State
   let state = {
     snake: [{x:10, y:10}],
     dir: {x:1, y:0},
@@ -30,9 +40,10 @@
     speedMs: 120,
     running: true,
     gameOver: false,
-  skin: 'classic',
+    skin: 'classic',
   };
 
+  // Helpers
   function randFood(){
     while(true){
       const x = Math.floor(Math.random()*tiles);
@@ -47,93 +58,103 @@
     state.nextDir = {x:1, y:0};
     state.food = randFood();
     state.score = 0;
-    state.speedMs = 120;
+    state.speedMs = parseInt(localStorage.getItem('snake_speed') || speedRange?.value || '120', 10);
     state.running = true;
     state.gameOver = false;
     scoreEl.textContent = '0';
   }
 
+  function fitCanvas(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const size = Math.floor((rect.width && rect.height) ? Math.min(rect.width, rect.height) : (rect.width || 420));
+    const px = Math.max(1, Math.round(size * dpr));
+    canvas.width = px;
+    canvas.height = px;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(dpr, dpr); // draw in CSS pixels
+  }
+  window.addEventListener('resize', fitCanvas);
+  try { new ResizeObserver(fitCanvas).observe(canvas); } catch {}
+
   function draw(){
+    const cssSize = canvas.clientWidth || 420;
+    const scale = cssSize / tiles;
+
+    // background
     ctx.fillStyle = '#000';
-    ctx.fillRect(0,0,canvas.width, canvas.height);
+    ctx.fillRect(0,0,cssSize, cssSize);
 
-    // draw food
+    // food
     ctx.fillStyle = '#ef4444';
-    ctx.fillRect(state.food.x*tile, state.food.y*tile, tile, tile);
+    ctx.fillRect(state.food.x*scale, state.food.y*scale, scale, scale);
 
-    // draw snake
+    // snake
     for(let i=0;i<state.snake.length;i++){
       const s = state.snake[i];
       if(state.skin === 'python'){
-        // Python logo inspired colors
         const headColor = '#3776AB';
         const bodyA = '#FFD43B';
         const bodyB = '#FFC331';
         ctx.fillStyle = i===0 ? headColor : (i % 2 ? bodyA : bodyB);
-        ctx.fillRect(s.x*tile, s.y*tile, tile, tile);
-        // simple eyes on head
+        const x = s.x*scale, y = s.y*scale, sz = scale;
+        ctx.fillRect(x, y, sz, sz);
         if(i===0){
           ctx.fillStyle = '#fff';
-          const cx = s.x*tile, cy = s.y*tile;
-          ctx.fillRect(cx + 5, cy + 5, 3, 3);
-          ctx.fillRect(cx + tile - 8, cy + 5, 3, 3);
+          ctx.fillRect(x + sz*0.25, y + sz*0.25, Math.max(2, sz*0.12), Math.max(2, sz*0.12));
+          ctx.fillRect(x + sz*0.65, y + sz*0.25, Math.max(2, sz*0.12), Math.max(2, sz*0.12));
           ctx.fillStyle = '#000';
-          ctx.fillRect(cx + 6, cy + 6, 1, 1);
-          ctx.fillRect(cx + tile - 7, cy + 6, 1, 1);
+          ctx.fillRect(x + sz*0.29, y + sz*0.29, Math.max(1, sz*0.06), Math.max(1, sz*0.06));
+          ctx.fillRect(x + sz*0.69, y + sz*0.29, Math.max(1, sz*0.06), Math.max(1, sz*0.06));
         }
       } else {
-        // Classic green
         ctx.fillStyle = i===0 ? '#22c55e' : '#16a34a';
-        ctx.fillRect(s.x*tile, s.y*tile, tile, tile);
+        const x = s.x*scale, y = s.y*scale, sz = scale;
+        ctx.fillRect(x, y, sz, sz);
       }
     }
 
-    if(state.gameOver){
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillRect(0,0,canvas.width, canvas.height);
-      ctx.fillStyle = '#e5e7eb';
-      ctx.font = 'bold 28px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText('Game Over - Press Enter to restart', canvas.width/2, canvas.height/2);
-    } else if(!state.running){
+    // overlays
+    if(state.gameOver || !state.running){
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(0,0,canvas.width, canvas.height);
+      ctx.fillRect(0,0,cssSize, cssSize);
       ctx.fillStyle = '#e5e7eb';
-      ctx.font = 'bold 28px system-ui';
+      ctx.font = 'bold 22px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('Paused - Press Space', canvas.width/2, canvas.height/2);
+      const msg = state.gameOver ? 'Game Over - Press Enter to restart' : 'Paused - Press Space';
+      ctx.fillText(msg, cssSize/2, cssSize/2);
     }
   }
 
   function tick(){
     if(!state.running || state.gameOver) return;
 
-    // apply nextDir if not reversing
+    // update direction
     const nd = state.nextDir;
     const hd = state.dir;
     if(!(nd.x === -hd.x && nd.y === -hd.y)) state.dir = nd;
 
+    // new head
     const head = {x: state.snake[0].x + state.dir.x, y: state.snake[0].y + state.dir.y};
-
-    // wrap around
     head.x = (head.x + tiles) % tiles;
     head.y = (head.y + tiles) % tiles;
 
-    // self collision
+    // collision
     if(state.snake.some((s,idx)=> idx>0 && s.x===head.x && s.y===head.y)){
       state.gameOver = true;
       (async()=>{ await ScoresDB.saveScore(state.score); await refreshScores(); })();
       return;
     }
 
+    // move
     state.snake.unshift(head);
-
-    // food
     if(head.x === state.food.x && head.y === state.food.y){
       state.score += 10;
       scoreEl.textContent = String(state.score);
       state.food = randFood();
-  if(state.speedMs > 50) state.speedMs -= 3; // allow faster than before
+      if(state.speedMs > 50) state.speedMs -= 3;
     } else {
       state.snake.pop();
     }
@@ -149,10 +170,9 @@
     requestAnimationFrame(loop);
   }
 
-  function setDir(dx,dy){
-    state.nextDir = {x:dx, y:dy};
-  }
+  function setDir(dx,dy){ state.nextDir = {x:dx, y:dy}; }
 
+  // Keyboard
   window.addEventListener('keydown', (e)=>{
     const k = e.key.toLowerCase();
     if(k==='arrowup' || k==='w') setDir(0,-1);
@@ -163,16 +183,15 @@
     else if(k==='enter' && state.gameOver){ resetGame(); }
   });
 
+  // Modal helpers
   function showNameModal(){
     modal.classList.remove('hidden');
     input.value = ScoresDB.getPlayer() || '';
     setTimeout(()=> input.focus(), 50);
   }
+  function hideNameModal(){ modal.classList.add('hidden'); }
 
-  function hideNameModal(){
-    modal.classList.add('hidden');
-  }
-
+  // Scores UI
   async function refreshScores(){
     const top = await ScoresDB.getTop(10);
     listEl.innerHTML = '';
@@ -182,40 +201,33 @@
       listEl.appendChild(li);
     });
     const name = ScoresDB.getPlayer();
-    if(name){
-      yourBestEl.textContent = String(await ScoresDB.getBestForPlayer(name));
-    } else {
-      yourBestEl.textContent = '-';
-    }
+    yourBestEl.textContent = name ? String(await ScoresDB.getBestForPlayer(name)) : '-';
   }
 
+  // Boot
   async function boot(){
     await ScoresDB.init();
 
     const existing = ScoresDB.getPlayer();
-    if(!existing){
-      showNameModal();
-    } else {
-      nameSpan.textContent = existing;
-    }
+    if(!existing) showNameModal(); else nameSpan.textContent = existing;
     backendInfo.textContent = `Leaderboard: ${ScoresDB.backend() === 'supabase' ? 'Global (Supabase)' : 'Local (this browser only)'}`;
 
-    // Load saved settings
+    // settings
     const savedSpeed = parseInt(localStorage.getItem('snake_speed') || '120', 10);
     if(Number.isFinite(savedSpeed)){
       state.speedMs = savedSpeed;
-      speedRange.value = String(savedSpeed);
-      speedLabel.textContent = String(savedSpeed);
+      if(speedRange){ speedRange.value = String(savedSpeed); speedLabel.textContent = String(savedSpeed); }
     }
     const savedSkin = localStorage.getItem('snake_skin') || 'classic';
-    state.skin = savedSkin;
-    skinSelect.value = savedSkin;
+    state.skin = savedSkin; if(skinSelect) skinSelect.value = savedSkin;
 
+    fitCanvas();
     await refreshScores();
     resetGame();
     requestAnimationFrame(loop);
   }
 
+  // Form
   form.addEventListener('submit', (e)=>{
     e.preventDefault();
     const name = input.value.trim();
@@ -226,27 +238,30 @@
       hideNameModal();
     }
   });
+  changePlayerBtn.addEventListener('click', showNameModal);
 
-  changePlayerBtn.addEventListener('click', ()=>{
-    showNameModal();
-  });
-
-  // Speed and skin controls
+  // Settings
   speedRange.addEventListener('input', ()=>{
     const v = parseInt(speedRange.value, 10);
     state.speedMs = v;
     speedLabel.textContent = String(v);
-  localStorage.setItem('snake_speed', String(v));
+    localStorage.setItem('snake_speed', String(v));
   });
   skinSelect.addEventListener('change', ()=>{
     state.skin = skinSelect.value;
-  localStorage.setItem('snake_skin', state.skin);
+    localStorage.setItem('snake_skin', state.skin);
   });
 
-  // kick things off after DOM is ready but sql.js is deferred; db.js loads before this file
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
+  // Touch controls
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if(isTouch && mobileControls){ mobileControls.classList.remove('hidden'); }
+  function bindTap(el, fn){ if(!el) return; el.addEventListener('click', e=>{e.preventDefault(); fn();}); el.addEventListener('touchstart', e=>{e.preventDefault(); fn();}, {passive:false}); }
+  bindTap(btnUp, ()=> setDir(0,-1));
+  bindTap(btnDown, ()=> setDir(0,1));
+  bindTap(btnLeft, ()=> setDir(-1,0));
+  bindTap(btnRight, ()=> setDir(1,0));
+  bindTap(btnPause, ()=> { state.running = !state.running; });
+
+  // Start
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
