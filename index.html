@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake 🐍 with SQLite Scores</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- sql.js (SQLite compiled to WebAssembly) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js" defer></script>
+  <!-- App configuration (choose local or Supabase backend) -->
+  <script src="config.js" defer></script>
+  <script src="db.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Snake 🐍</h1>
+      <div class="meta">
+        <div>Player: <span id="playerName">-</span></div>
+        <div>Score: <span id="score">0</span></div>
+        <button id="changePlayer" title="Change player">Switch</button>
+      </div>
+    </header>
+
+    <main>
+      <canvas id="board" width="420" height="420" aria-label="Snake game board"></canvas>
+
+      <aside class="sidebar">
+        <h2>Top Scores</h2>
+        <ol id="topScores" class="scores"></ol>
+        <h3>Your Best</h3>
+        <div id="yourBest">-</div>
+        <div id="backendInfo" class="hint"></div>
+        <div class="hint">Use arrow keys or WASD. Press Space to pause.</div>
+
+        <hr/>
+        <section class="controls">
+          <h3>Game Settings</h3>
+          <label class="control">
+            <span>Speed (ms per tick): <strong id="speedLabel">120</strong></span>
+            <input id="speedRange" type="range" min="50" max="250" step="5" value="120"/>
+          </label>
+          <label class="control">
+            <span>Skin</span>
+            <select id="skinSelect">
+              <option value="classic">Classic Green</option>
+              <option value="python">Python Blue/Yellow</option>
+            </select>
+          </label>
+        </section>
+      </aside>
+    </main>
+
+    <footer>
+      <small>Scores are stored locally in your browser via SQLite (sql.js).</small>
+    </footer>
+  </div>
+
+  <!-- Name prompt modal -->
+  <div id="nameModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <h2>Who are you?</h2>
+      <form id="nameForm">
+        <input id="nameInput" type="text" placeholder="Enter your name" minlength="1" maxlength="20" required />
+        <button type="submit">Start</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

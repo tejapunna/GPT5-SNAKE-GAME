@@ -1,0 +1,48 @@
+/* Basic layout */
+:root{
+  --bg: #0f172a;
+  --panel: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #22c55e;
+  --accent-2: #16a34a;
+  --danger: #ef4444;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+
+.app{max-width:900px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;justify-content:space-between;align-items:center}
+header h1{margin:0;font-size:28px}
+.meta{display:flex;gap:12px;align-items:center}
+button{background:var(--panel);color:var(--text);border:1px solid #374151;padding:6px 10px;border-radius:8px;cursor:pointer}
+button:hover{background:#1f2937}
+
+main{display:grid;grid-template-columns:1fr 240px;gap:16px;align-items:start}
+#board{background:#000;border:2px solid #1f2937;border-radius:8px;box-shadow:0 0 0 4px rgba(0,0,0,.2) inset}
+.sidebar{background:var(--panel);padding:12px;border-radius:10px;border:1px solid #1f2937}
+.sidebar h2,.sidebar h3{margin:8px 0}
+.scores{margin:0;padding-left:18px}
+.hint{margin-top:10px;color:var(--muted);font-size:12px}
+
+footer{color:var(--muted);text-align:center}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+.hidden{display:none}
+.modal-content{background:var(--panel);padding:20px;border-radius:12px;border:1px solid #374151;min-width:280px}
+.modal-content h2{margin-top:0}
+.modal-content form{display:flex;gap:8px}
+.modal-content input{flex:1;padding:8px;border-radius:8px;border:1px solid #374151;background:#0b1220;color:var(--text)}
+.modal-content button{background:var(--accent);border-color:transparent;color:#06120a}
+.modal-content button:hover{background:var(--accent-2)}
+
+/* Controls */
+.controls{margin-top:12px}
+.controls .control{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.controls input[type="range"]{width:100%}
+.controls select{background:#0b1220;color:var(--text);border:1px solid #374151;border-radius:8px;padding:6px}
+
+/* Optional python skin colors (used by game.js) */
+.skin-python .snake-head{fill:#1f3a5f}
+.skin-python .snake-body{fill:#f6c756}
